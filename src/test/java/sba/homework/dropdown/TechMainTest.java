@@ -82,13 +82,14 @@ public class TechMainTest {
 //		System.out.println("email = " + contactInfo[1].toString());
 
         WebElement contactInfoElement = driver.findElement(By.xpath("(//div[@class='box-content']//following-sibling::p)[1]"));
-        //contactInfoElement.getText();
-        System.out.println(contactInfoElement.getText());
-
-        sleepInSecond(30);
+        String[] contactInfo = contactInfoElement.getText().split(System.lineSeparator());
+        for (String detail: contactInfo) {
+            System.out.println("+" + detail+ ",,,");
+        }
+        //sleepInSecond(30);
         page.clickLogout();
 
-        sleepInSecond(300);
+        //sleepInSecond(30);
         assertEquals(homePageUrl,driver.getCurrentUrl());
 
 
