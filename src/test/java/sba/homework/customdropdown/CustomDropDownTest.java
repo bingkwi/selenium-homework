@@ -1,6 +1,7 @@
 package sba.homework.customdropdown;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -20,6 +21,7 @@ import java.util.List;
 public class CustomDropDownTest {
     WebDriver driver;
     WebDriverWait explicitWait;
+    JavascriptExecutor javascriptExecutor;
 
     @BeforeMethod
     public void setUp() throws InterruptedException {
@@ -58,6 +60,53 @@ public class CustomDropDownTest {
         }
     }
 
+    /**
+     *
+     * @param parentXpath
+     * @param childXpath
+     * @param expectedItem
+     * @throws InterruptedException
+     */
+    public void selectItemInCustomDropDownUpdated(String parentXpath, String childXpath, String expectedItem) throws InterruptedException {
+        driver.findElement(By.xpath(parentXpath)).click();
+        Thread.sleep(2000);
+
+        explicitWait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath(childXpath)));
+
+        List<WebElement> items = driver.findElements(By.xpath(childXpath));
+        for (WebElement tempElement : items) {
+            if (tempElement.getText().equals(expectedItem)) {
+                if (tempElement.isDisplayed()) {
+                    tempElement.click();
+                    Thread.sleep(2000);
+                } else {
+                    // scroll to element
+                    javascriptExecutor.executeScript("arguments[0].scrollIntoView(true);", tempElement);
+                    // click by Javascript
+                    javascriptExecutor.executeScript("arguments[0].click();", tempElement);
+                }
+                break;
+            }
+        }
+    }
+
+    public void selectItemInEditableDropDown(String parentXpath, String childXpath, String expectedItem) throws InterruptedException {
+        // sendKeys
+        driver.findElement(By.xpath(parentXpath)).sendKeys(expectedItem);
+        Thread.sleep(2000);
+
+        explicitWait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.xpath(childXpath)));
+
+        List<WebElement> items = driver.findElements(By.xpath(childXpath));
+        for (WebElement tempElement : items) {
+            if (tempElement.getText().equals(expectedItem)) {
+                tempElement.click();
+                Thread.sleep(2000);
+                break;
+            }
+        }
+    }
+
     @Test
     public void jQuery() throws InterruptedException {
         driver.get("https://jqueryui.com/resources/demos/selectmenu/default.html");
@@ -74,6 +123,7 @@ public class CustomDropDownTest {
     public void reactJS() throws InterruptedException {
         driver.get("https://react.semantic-ui.com/maximize/dropdown-example-search-selection/");
         String parentXpath = "//i[@class='dropdown icon']";
+        String parentXpath2 = "//input[@class='search']";
         String childXpath = "//div[contains(@class,'item')]/span[@class='text']";
         String currentSelection = "//div[@class='divider text']";
         String expectedItem1 = "Aland Islands";
@@ -82,6 +132,36 @@ public class CustomDropDownTest {
         Assert.assertEquals(driver.findElement(By.xpath(currentSelection)).getText(), expectedItem1);
         selectItemInCustomDropDown(parentXpath, childXpath, expectedItem2);
         Assert.assertEquals(driver.findElement(By.xpath(currentSelection)).getText(), expectedItem2);
+
+        /*
+        editable dropdown
+         */
+        selectItemInEditableDropDown(parentXpath2, childXpath, expectedItem1);
+        Assert.assertEquals(driver.findElement(By.xpath(currentSelection)).getText(), expectedItem1);
     }
+
+    @Test
+    public void tiemChungCovid() throws InterruptedException {
+        driver.get("https://tiemchungcovid19.gov.vn/portal/register-personf");
+        String provinceXpath = "//ng-select[@bindvalue='provinceCode']//span[@class='ng-arrow-wrapper']";
+        String districtXpath = "//ng-select[@bindvalue='districtCode']//span[@class='ng-arrow-wrapper']";
+        String wardXpath = "//ng-select[@bindvalue='wardCode']//span[@class='ng-arrow-wrapper']";
+        String childXpath = "//span[contains(@class,'ng-option-label')]";
+        String province = "Tỉnh Thái Nguyên";
+        String district = "Huyện Đại Từ";
+        String ward = "Thị Trấn Hùng Sơn";
+
+        selectItemInCustomDropDown(provinceXpath, childXpath, province);
+        Object o = javascriptExecutor.executeScript("return document.querySelector(\"ng-select[bindvalue='provinceCode']\").innerText.replace(\"×\",\" \").trim();");
+        Assert.assertEquals(o, province);
+
+        // or using function in code
+        String expectedValue = (String) javascriptExecutor.executeScript("return document.querySelector(\"ng-select[bindvalue='provinceCode']\").innerText");
+        Assert.assertEquals(expectedValue.replace("×", " ").trim(), province);
+
+        // or getText()
+        expectedValue = driver.findElement(By.xpath("//ng-select[@bindvalue='provinceCode']//span[contains(@class, 'ng-value-label')]")).getText();
+    }
+
 
 }
